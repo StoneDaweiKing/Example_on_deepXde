@@ -124,14 +124,22 @@ def main():
     cntr_1 = ax[1].tricontourf(x, t, u_exact, levels=14, cmap="RdBu_r")
     ax[1].plot(x, t, 'k.', ms=3)
     fig.colorbar(cntr_1, ax=ax[1])
+    
+    ax[2].tricontour(x, t, u_predict-u_exact, levels=14, linewidths=0.5, colors='k')
+    cntr_2 = ax[2].tricontourf(x, t, u_predict-u_exact, levels=14, cmap="RdBu_r")
+    ax[2].plot(x, t, 'k.', ms=3)
+    fig.colorbar(cntr_2, ax=ax[2])
+    
     pyplot.show()
     
     x_last = x[9900:10000]
     u_exact_last = u_exact[9900:10000]
     u_predict_last = u_predict[9900:10000]
-    fig, ax = pyplot.subplots(nrows=2)
-    ax[0].plot(x_last, u_exact_last)
-    ax[1].plot(x_last, u_predict_last)
+    pyplot.xlabel("x")
+    pyplot.ylabel("u")
+    pyplot.plot(x_last, u_exact_last, color="red", linestyle="dashed", label="u_exact")
+    pyplot.plot(x_last, u_predict_last, color="orange", linestyle="dashed", label="u_predict")
+    pyplot.legend()
     pyplot.show()
 
    
