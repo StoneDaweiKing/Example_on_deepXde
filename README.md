@@ -3,4 +3,13 @@ For Burgers equation <a href="https://www.codecogs.com/eqnedit.php?latex=\frac{\
 We would use PINN to solve the equation:
 ## FNN (Feedforward Neural Network) with 15000 adams + L-BFGS-B
 Contour Plot: The first graph is for predicted, the second graph is for exact solution and the third graph is for residual.
-<img src=“./img/Contour Plot FNN.png”>
+<img src=img\Contour%20Plot%20FNN.png>
+
+Train Loss and Test Loss (Here the test loss is calculated upon the 10000 uniform points on x-t plane).
+<img src=img\FNN.png>
+
+3D plot for the predicted value:
+<img src=img\FNN_3d.png>
+
+The comparison plot between expected value and exact value:
+<img src=img\FNN_t%3D1.png>
