@@ -9,6 +9,8 @@ Train Loss and Test Loss (Here the test loss is calculated upon the 10000 unifor
 <img src=img\FNN.png>
 
 3D plot for the predicted value:
+(Over 10000 uniform residul points in the x-t domain)
+
 <img src=img\FNN_3d.png>
 
 The comparison plot between expected value and exact value:
