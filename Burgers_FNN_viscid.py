@@ -5,6 +5,8 @@ from __future__ import print_function
 import numpy as np
 from matplotlib import pyplot
 import deepxde as dde
+import imageio
+import os
 
 '''
 In DeepXDE, the coding sequence is:
@@ -28,9 +30,11 @@ def main():
      second column represents y). y represents the output (which is a one-column matrix representing u(x, t)).
      '''
     def pde(x, y):
+        alpha = 0.001
         dy_x = dde.grad.jacobian(y, x, i=0, j=0)
         dy_t = dde.grad.jacobian(y, x, i=0, j=1)
-        return dy_t + y * dy_x
+        dy_xx = dde.grad.hessian(y, x, i=0, j=0)
+        return dy_t + y * dy_x - alpha * dy_xx
     
     '''
      Define the domain of the DE system.
@@ -58,13 +62,13 @@ def main():
 
     
     data = dde.data.TimePDE(
-        geomtime, pde, [ic], num_domain=2540, num_boundary=80, num_initial=160, solution=exact_sol, num_test=1000
+        geomtime, pde, [ic], num_domain=2540, num_boundary=80, num_initial=160, solution=exact_sol, num_test=100000
     )
     
     '''
      Build the model with 3 hidden layers, in each layers we have the width being 20
      '''
-    net = dde.maps.ResNet([2] + [20] * 3 + [1], "tanh", "Glorot normal")
+    net = dde.maps.FNN([2] + [20] * 3 + [1], "tanh", "Glorot normal")
     model = dde.Model(data, net)
     
     '''
@@ -106,9 +110,9 @@ def main():
     f = model.predict(X, operator=pde)
     print("Mean residual:", np.mean(np.absolute(f)))
     print("L2 relative error:", dde.metrics.l2_relative_error(y_true, y_pred))
-    np.savetxt("test_Resnet.dat", np.hstack((X, y_true, y_pred)))
+    np.savetxt("test_FNN.dat", np.hstack((X, y_true, y_pred)))
     
-    data = np.genfromtxt("test_Resnet.dat", delimiter=' ')
+    data = np.genfromtxt("test_FNN.dat", delimiter=' ')
     x = data[:, 0]
     t = data[:, 1]
     u_exact = data[:, 2]
@@ -131,18 +135,71 @@ def main():
     fig.colorbar(cntr_2, ax=ax[2])
     
     pyplot.show()
-    
-    x_last = x[9900:10000]
-    u_exact_last = u_exact[9900:10000]
-    u_predict_last = u_predict[9900:10000]
-    pyplot.xlabel("x")
-    pyplot.ylabel("u")
-    pyplot.plot(x_last, u_exact_last, color="red", linestyle="dashed", label="u_exact")
-    pyplot.plot(x_last, u_predict_last, color="orange", linestyle="dashed", label="u_predict")
-    pyplot.legend()
+  
+    def show_time(t, show=False):
+        x_interval = 10000;
+        X = np.zeros((x_interval, 2));
+        for i in range(0, x_interval):
+            X[i, 0] = -1 + 2 * i / x_interval
+            X[i, 1] = t
+        y_pred = model.predict(X);
+        y_exact = np.zeros((x_interval, 1));
+        for i in range(0, x_interval):
+            x = -1 + i * 2 / x_interval
+            if x >= 0.5*t:
+                y_exact[i, 0] = 0
+            else:
+                y_exact[i, 0] = 1    
+        pyplot.xlabel("x")
+        pyplot.ylabel("u")
+        pyplot.plot(X[:, 0], y_exact, color="red", linestyle="dashed", label="y_exact")
+        pyplot.plot(X[:, 0], y_pred, color="blue", linestyle="dashed", label="y_pred")
+        pyplot.title(f'u versu x at time {t}')
+        pyplot.legend()
+        if show is True:
+            pyplot.show() 
+        pyplot.savefig(f'{t}.png')
+        if show is False:
+            pyplot.close()
+        return dde.metrics.l2_relative_error(y_exact, y_pred);
+        
+    show_time(0, True);
+    show_time(0.2, True);
+    show_time(0.4, True);
+    show_time(0.6, True);
+    show_time(0.8, True);
+    show_time(1, True);
+        
+        
+    timeset = 100;    
+    filenames = ['0.png', '0.2.png', '0.4.png', '0.6.png', '0.8.png', '1.png']
+    time = [];
+    l2loss = [];
+    for i in range(0, timeset):
+        # plot the line chart
+        t = i / timeset
+        loss = show_time(t)
+        # create file name and append it to a list
+        filename = f'{t}.png'
+        filenames.append(filename)
+        time.append(t)
+        l2loss.append(loss)
+        
+    # build gif
+    with imageio.get_writer('mygif.gif', mode='I') as writer:
+        for filename in filenames:
+            image = imageio.imread(filename)
+            writer.append_data(image)
+        
+    pyplot.plot(time, l2loss, color="red", linestyle="dashed", label="time versu loss")
     pyplot.show()
+    pyplot.savefig('Burgers loss versu time')
 
-   
+    
+    # Remove files
+    for filename in set(filenames):
+        os.remove(filename)
+        
 
     
     
